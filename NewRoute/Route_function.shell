@@ -1,0 +1,159 @@
+#!/bin/bash
+#Create by qili at 20170221
+TmpPath=/tmp/route
+ProgramPath=/home/route
+Down_URL=http://59.151.34.20:8887/NewRoute
+Filename=/etc/sysconfig/network-scripts/route-eth0_test
+Is_Bond=-1
+JiFang=-1
+Gwct=-1
+Gwcu=-1
+Gwcm=-1
+Gwtt=-1
+
+
+function Random_time(){
+	min_time=$1	
+	max_time=$(($2-${min_time}+1))
+	num=$(date +%s%N)
+	echo $(( ${num} % ${max_time} + ${min_time} ))
+}
+
+function Download_Netfile(){
+
+if [[ -z ${TmpPath} ]]; then
+	md5path=/tmp/test_wget
+else
+	md5path=${TmpPath}
+fi
+
+rm -f ${md5path}/*
+mkdir -p ${md5path}
+sleep $(Random_time 3 10)
+cd ${md5path}
+for f in {'route-cm.txt','route-ct.txt','route-cu.txt','route-tt.txt'}
+do
+	wget http://59.151.34.20:8887/NewRoute/${f} -q -T 2 -O ${md5path}/${f}
+	wget http://59.151.34.20:8887/NewRoute/${f}.md5 -q -T 2 -O ${md5path}/${f}.md5
+	if [[ "x$(md5sum ${md5path}/${f} |awk '{print $1}')" == "x$(cat ${md5path}/${f}.md5)" ]]; then
+		echo "MD5 match: ${md5path}/${f}"
+		rm -f ${md5path}/${f}.md5
+	else
+		echo "MD5 NOT match: ${md5path}/${f}" 
+		rm -f ${md5path}/${f}.md5
+		exit 2
+	fi
+done
+}
+
+function Diff_Netfile(){
+for Netfile in `ls ${TmpPath} | grep -v 'patch'`
+do
+	if [[ -s ${TmpPath}/${Netfile} ]]
+	then
+		diff -u ${ProgramPath}/NewRoute/${Netfile} ${TmpPath}/${Netfile} | grep -P '^[+,-]\d{1,3}' > ${TmpPath}/patch_${Netfile}
+	else 
+		echo "${Netfile} is Empty !" && curl -s ${Down_URL}/error.html > /dev/null && exit 2
+	fi
+done
+}
+
+function Choose_JF(){
+
+if [[ -n `ip a | grep 117.135` ]];then
+	echo -e "\e[32;40;1m[这是上海多线的机器 !]\e[0m\n"
+	JiFang=SHDX
+	Gwcu=112.65.200.1
+	Gwct=114.80.72.1
+fi
+
+if [[ -n `ip a | grep 101.71.83` ]];then
+	echo -e "\e[32;40;1m[这是宁波双线联通83网段的机器 !]\e[0m\n"
+	JiFang=NBSX_83
+	Gwcu=101.71.83.1
+	Gwcm=112.16.140.129
+	Gwtt=112.16.140.129
+fi
+
+if [[ -n `ip a | grep 101.71.95` ]];then
+        echo -e "\e[32;40;1m[这是宁波双线联通95网段的机器 !]\e[0m\n"
+        JiFang=NBSX_95
+        Gwcu=101.71.95.1
+        Gwcm=112.16.140.129
+        Gwtt=112.16.140.129
+fi
+
+if [[ -n `ip a | grep 125.39.181` ]];then
+	echo -e "\e[32;40;1m[这是天津多线的机器 !]\e[0m\n"
+        JiFang=TJDX
+	Gwct=119.90.26.1
+	Gwcm=117.131.201.129
+	Gwtt=117.131.201.129
+fi
+
+if [[ ${JiFang} -eq -1 ]];then
+	echo "Can not Choose JiFang,Please Check !"
+	Gwct=119.90.26.1
+	Gwcm=117.131.201.129
+	Gwtt=117.131.201.129
+fi
+
+}
+
+function Judge_Bond(){
+	echo -e "\e[32;40;1m[开始判断网卡是否聚合... !]\e[0m\n"
+	Flag=`ifconfig eth0 | grep "inet addr:"`
+	if [[ -n $Flag ]]
+		then
+			echo -e "\e[32;40;1m[网卡未聚合，准备执行添加路由脚本... !]\e[0m\n"
+			Is_Bond=0
+			Filename=/etc/sysconfig/network-scripts/route-eth0
+		else
+			echo -e "\e[32;40;1m[网卡已聚合，准备执行添加路由脚本... !]\e[0m\n"
+			Is_Bond=1
+			Filename=/etc/sysconfig/network-scripts/route-bond0
+	fi
+}
+
+function Modify_ROUTE(){
+for Tmpfile in `ls ${TmpPath} | grep "patch"`
+do
+	Tmpfile_ISP=`echo ${Tmpfile} | awk -F "." '{print $1}' | awk -F "-" '{print $2}'`
+	echo ${Tmpfile},${Tmpfile_ISP}
+	if [[ "`eval echo '$'"{Gw${Tmpfile_ISP}}"`" != "-1" ]]
+	then
+		for ModifyingData in `cat ${TmpPath}/${Tmpfile}`
+		do
+			Operation=`echo ${ModifyingData} | cut -c 1`
+			ModifyingRoute=`echo ${ModifyingData} | sed -e 's/^-//' -e 's/^+//'`
+			echo ${Operation},${ModifyingRoute}
+
+			if [[ "${Operation}" = "+" ]];then
+				echo "route add -net ${ModifyingRoute} gw `eval echo '$'"{Gw${Tmpfile_ISP}}"`"
+			elif [[ "${Operation}" = "-" ]];then
+				echo "route del -net ${ModifyingRoute} gw `eval echo '$'"{Gw${Tmpfile_ISP}}"`"
+			else
+				echo "The ${TmpPath}/${Tmpfile} has invalid arithmetic operator !(error token is \"+,-\")"
+			fi
+		done
+	else
+		echo "Gateway of ${Tmpfile_ISP} is Null,Continue next ISP !"
+		continue
+	fi
+done
+}
+
+#Gwct=-1
+#Gwcu=-1
+#Gwcm=-1
+#Gwtt=-1
+#echo ${Is_Bond},${Filename},${JiFang}
+#ADD_CT_ROUTE $Gwct $Filename 
+#Download_Netfile && Diff_Netfile
+#echo $(Random_time 1 10)
+#Judge_Bond
+#Choose_JF
+#echo ${Is_Bond},${Filename},${JiFang}
+#echo $Gwct $Gwcu $Gwcm $Gwtt
+#unset Gwct Gwcu Gwcm Gwtt
+#Modify_ROUTE
