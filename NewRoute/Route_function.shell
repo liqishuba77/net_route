@@ -1,5 +1,6 @@
 #!/bin/bash
 #Create by qili at 20170221
+#Release 2
 TmpPath=/tmp/route
 ProgramPath=/home/route
 Down_URL=http://59.151.34.20:8887/NewRoute
