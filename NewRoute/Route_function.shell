@@ -5,6 +5,7 @@ TmpPath=/tmp/route
 ProgramPath=/home/route
 Down_URL=http://59.151.34.20:8887/NewRoute
 Filename=/etc/sysconfig/network-scripts/route-eth0_test
+Failed_File=/tmp/route/fail-route
 Is_Bond=-1
 JiFang=-1
 Gwct=-1
@@ -32,7 +33,7 @@ rm -f ${md5path}/*
 mkdir -p ${md5path}
 sleep $(Random_time 3 10)
 cd ${md5path}
-for f in {'route-cm.txt','route-ct.txt','route-cu.txt','route-tt.txt'}
+for f in {'route-cm.txt','route-ct.txt','route-cu.txt','route-tt.txt','Route_function.shell','modify_route.sh'}
 do
 	wget http://59.151.34.20:8887/NewRoute/${f} -q -T 2 -O ${md5path}/${f}
 	wget http://59.151.34.20:8887/NewRoute/${f}.md5 -q -T 2 -O ${md5path}/${f}.md5
@@ -47,8 +48,13 @@ do
 done
 }
 
+function Updata_Program(){
+	cp -f ${TmpPath}/Route_function.shell ${ProgramPath}/NewRoute/Route_function.shell
+	cp -f ${TmpPath}/modify_route.sh ${ProgramPath}/NewRoute/modify_route.sh
+}
+
 function Diff_Netfile(){
-for Netfile in `ls ${TmpPath} | grep -v 'patch'`
+for Netfile in `ls ${TmpPath} | grep -v 'patch' | grep -v 'fail' | grep -v '.shell' | grep -v '.sh'`
 do
 	if [[ -s ${TmpPath}/${Netfile} ]]
 	then
@@ -94,6 +100,7 @@ fi
 
 if [[ ${JiFang} -eq -1 ]];then
 	echo "Can not Choose JiFang,Please Check !"
+	exit 2
 fi
 
 }
@@ -118,24 +125,44 @@ for Tmpfile in `ls ${TmpPath} | grep "patch"`
 do
 	Tmpfile_ISP=`echo ${Tmpfile} | awk -F "." '{print $1}' | awk -F "-" '{print $2}'`
 	echo ${Tmpfile},${Tmpfile_ISP}
+	rm -f "${Failed_File}-${Tmpfile_ISP}-`date +%Y%m%d`"
 	if [[ "`eval echo '$'"{Gw${Tmpfile_ISP}}"`" != "-1" ]]
 	then
 		for ModifyingData in `cat ${TmpPath}/${Tmpfile}`
 		do
 			Operation=`echo ${ModifyingData} | cut -c 1`
 			ModifyingRoute=`echo ${ModifyingData} | sed -e 's/^-//' -e 's/^+//'`
-			echo ${Operation},${ModifyingRoute}
+#			echo ${Operation},${ModifyingRoute}
 
 			if [[ "${Operation}" = "+" ]];then
-				echo "route add -net ${ModifyingRoute} gw `eval echo '$'"{Gw${Tmpfile_ISP}}"`"
+#				echo "route add -net ${ModifyingRoute} gw $(eval echo '$'"{Gw${Tmpfile_ISP}}")"
+				route add -net ${ModifyingRoute} gw $(eval echo '$'"{Gw${Tmpfile_ISP}}") && \
+				echo "${ModifyingRoute} via $(eval echo '$'"{Gw${Tmpfile_ISP}}")" >> ${Filename} || \
+				echo "${ModifyingRoute} via $(eval echo '$'"{Gw${Tmpfile_ISP}}")" >> ${Failed_File}-${Tmpfile_ISP}-`date +%Y%m%d`
 			elif [[ "${Operation}" = "-" ]];then
-				echo "route del -net ${ModifyingRoute} gw `eval echo '$'"{Gw${Tmpfile_ISP}}"`"
+#				echo "route del -net ${ModifyingRoute} gw `eval echo '$'"{Gw${Tmpfile_ISP}}"`"
+				route del -net ${ModifyingRoute} gw $(eval echo '$'"{Gw${Tmpfile_ISP}}") && \
+				sed -i "s#${ModifyingRoute}#DELETE_LINE#g" ${Filename} && \
+				sed -i '/DELETE_LINE/d' ${Filename} || \
+				echo "${ModifyingRoute} via $(eval echo '$'"{Gw${Tmpfile_ISP}}")" >> ${Failed_File}-${Tmpfile_ISP}-`date +%Y%m%d`
 			else
 				echo "The ${TmpPath}/${Tmpfile} has invalid arithmetic operator !(error token is \"+,-\")"
 			fi
 		done
+		
+
+		if [[ -e "${Failed_File}-${Tmpfile_ISP}-`date +%Y%m%d`" ]]
+		then
+			echo -ne "\e[31;40;1m[${Tmpfile_ISP} Route-table has error ! Please Check ${TmpPath}]\e[0m\n"
+		else
+			echo -ne "\e[32;40;1m[Congratulation !]\e[0m\n"
+#			cp -f ${TmpPath}/${Tmpfile} ${ProgramPath}/NewRoute/${Tmpfile}-test
+		fi
+
+
 	else
 		echo "Gateway of ${Tmpfile_ISP} is Null,Continue next ISP !"
 		continue
 	fi
 done
+}
