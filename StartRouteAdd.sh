@@ -7,7 +7,7 @@
 Flag=`ifconfig eth0 | grep "inet addr:"`
 
 if [[ -z `cat /etc/crontab | grep "/home/route/NewRoute/modify_route.sh"` ]]; then
-  echo "*/1 * * * * root /bin/bash /home/route/NewRoute/modify_route.sh" >> /etc/crontab
+  echo "*/10 * * * * root /bin/bash /home/route/NewRoute/modify_route.sh" >> /etc/crontab
 fi
 
 if [[ -e /tmp/route.bak ]]
