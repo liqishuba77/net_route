@@ -6,6 +6,10 @@
 #Updated BY LIQI at 2017/02/23 add modify route program
 Flag=`ifconfig eth0 | grep "inet addr:"`
 
+if [[ -z `cat /etc/crontab | grep "/home/route/NewRoute/modify_route.sh"` ]]; then
+  echo "*/1 * * * * root /bin/bash /home/route/NewRoute/modify_route.sh" >> /etc/crontab
+fi
+
 if [[ -e /tmp/route.bak ]]
 	then
 		echo -ne "\e[31;40;1m[The Route script has been run !]\e[0m\n"

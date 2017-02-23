@@ -51,6 +51,7 @@ done
 function Updata_Program(){
 	cp -f ${TmpPath}/Route_function.shell ${ProgramPath}/NewRoute/Route_function.shell
 	cp -f ${TmpPath}/modify_route.sh ${ProgramPath}/NewRoute/modify_route.sh
+	chmod +x ${ProgramPath}/NewRoute/modify_route.sh
 }
 
 function Diff_Netfile(){
