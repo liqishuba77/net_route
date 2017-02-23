@@ -106,8 +106,8 @@ fi
 }
 
 function Judge_Bond(){
-	echo -e "\e[32;40;1m[开始判断网卡是否聚合... !]\e[0m\n"
-	Flag=`ifconfig eth0 | grep "inet addr:"`
+echo -e "\e[32;40;1m[开始判断网卡是否聚合... !]\e[0m\n"
+Flag=`ifconfig eth0 | grep "inet addr:"`
 	if [[ -n $Flag ]]
 		then
 			echo -e "\e[32;40;1m[网卡未聚合，准备执行添加路由脚本... !]\e[0m\n"
@@ -156,7 +156,7 @@ do
 			echo -ne "\e[31;40;1m[${Tmpfile_ISP} Route-table has error ! Please Check ${TmpPath}]\e[0m\n"
 		else
 			echo -ne "\e[32;40;1m[Congratulation !]\e[0m\n"
-#			cp -f ${TmpPath}/${Tmpfile} ${ProgramPath}/NewRoute/${Tmpfile}-test
+			cp -f ${TmpPath}/route-${Tmpfile_ISP}.txt ${ProgramPath}/NewRoute/route-${Tmpfile_ISP}.txt
 		fi
 
 
