@@ -94,9 +94,6 @@ fi
 
 if [[ ${JiFang} -eq -1 ]];then
 	echo "Can not Choose JiFang,Please Check !"
-	Gwct=119.90.26.1
-	Gwcm=117.131.201.129
-	Gwtt=117.131.201.129
 fi
 
 }
@@ -142,19 +139,3 @@ do
 		continue
 	fi
 done
-}
-
-#Gwct=-1
-#Gwcu=-1
-#Gwcm=-1
-#Gwtt=-1
-#echo ${Is_Bond},${Filename},${JiFang}
-#ADD_CT_ROUTE $Gwct $Filename 
-#Download_Netfile && Diff_Netfile
-#echo $(Random_time 1 10)
-#Judge_Bond
-#Choose_JF
-#echo ${Is_Bond},${Filename},${JiFang}
-#echo $Gwct $Gwcu $Gwcm $Gwtt
-#unset Gwct Gwcu Gwcm Gwtt
-#Modify_ROUTE

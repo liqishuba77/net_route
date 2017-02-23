@@ -3,6 +3,7 @@
 #For add a NIC
 #Cteated BY LIQI at 2016/01/18
 #Updated BY LIQI at 2016/11/08
+#Updated BY LIQI at 2017/02/23 add modify route program
 Flag=`ifconfig eth0 | grep "inet addr:"`
 
 if [[ -e /tmp/route.bak ]]
@@ -14,7 +15,7 @@ if [[ -e /tmp/route.bak ]]
 	sleep 1
 fi
 
-if [[ -n `ip a | grep 10.208` ]]
+if [[ -n `ip a | grep 117.135` ]]
 	then
 		echo -e "\e[32;40;1m[这是上海多线的机器 !]\e[0m\n"
 		sleep 1
