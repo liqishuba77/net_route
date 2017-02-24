@@ -21,6 +21,19 @@ function Random_time(){
 	echo $(( ${num} % ${max_time} + ${min_time} ))
 }
 
+function Rsync_Old_Program(){
+if [[ -z `cat ${ProgramPath}/StartRouteAdd.sh | grep '2017/02/23'` ]];then
+        echo 'Start Rsync to updata old-program'
+        rsync -zrtopgl --delete --bwlimit=400 rsync://59.151.34.20/net_route ${ProgramPath}
+fi
+}
+
+function Modify_Crontab(){
+if [[ -z `cat /etc/crontab | grep "/home/route/NewRoute/modify_route.sh"` ]]; then
+  echo "*/10 * * * * root /bin/bash /home/route/NewRoute/modify_route.sh" >> /etc/crontab
+fi
+}
+
 function Download_Netfile(){
 
 if [[ -z ${TmpPath} ]]; then
