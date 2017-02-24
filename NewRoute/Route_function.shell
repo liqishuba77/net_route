@@ -146,7 +146,7 @@ do
 		do
 			Operation=`echo ${ModifyingData} | cut -c 1`
 			ModifyingRoute=`echo ${ModifyingData} | sed -e 's/^-//' -e 's/^+//'`
-#			echo ${Operation},${ModifyingRoute}
+			echo ${Operation},${ModifyingRoute}
 
 			if [[ "${Operation}" = "+" ]];then
 #				echo "route add -net ${ModifyingRoute} gw $(eval echo '$'"{Gw${Tmpfile_ISP}}")"
