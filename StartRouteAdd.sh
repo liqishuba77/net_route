@@ -19,7 +19,7 @@ if [[ -e /tmp/route.bak ]]
 	sleep 1
 fi
 
-if [[ -n `ip a | grep 117.135` ]]
+if [[ -n `ip a | grep 117.135.157` ]]
 	then
 		echo -e "\e[32;40;1m[这是上海多线的机器 !]\e[0m\n"
 		sleep 1
